@@ -1,0 +1,106 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Rekap Perbaikan Mesin</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+    th { background-color: #f2f2f2; }
+    .form-input { margin: 10px 0; }
+    button { margin-top: 10px; }
+  </style>
+</head>
+<body>
+  <h2>Rekap Perbaikan Mesin</h2>
+  <div class="form-input">
+    <label>Nama Teknisi: <input type="text" id="teknisi" /></label><br/>
+    <label>Mesin: <input type="text" id="mesin" /></label><br/>
+    <label>Kerusakan: <input type="text" id="kerusakan" /></label><br/>
+    <label>Tindakan: <input type="text" id="tindakan" /></label><br/>
+    <label>Tanggal: <input type="date" id="tanggal" /></label><br/>
+    <label>Shift: 
+      <select id="shift">
+        <option value="Pagi">Pagi</option>
+        <option value="Sore">Sore</option>
+        <option value="Malam">Malam</option>
+      </select>
+    </label><br/>
+    <button onclick="tambahData()">Tambah</button>
+    <button onclick="unduhCSV()">Unduh CSV</button>
+    <button onclick="hapusData()">Hapus Semua</button>
+  </div>
+  <table id="tabel">
+    <thead>
+      <tr>
+        <th>No</th><th>Teknisi</th><th>Mesin</th><th>Kerusakan</th><th>Tindakan</th><th>Tanggal</th><th>Shift</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    function simpanLocalStorage(data) {
+      localStorage.setItem("rekapPerbaikan", JSON.stringify(data));
+    }
+
+    function ambilLocalStorage() {
+      return JSON.parse(localStorage.getItem("rekapPerbaikan") || "[]");
+    }
+
+    function tampilkanData() {
+      const data = ambilLocalStorage();
+      const tbody = document.querySelector("#tabel tbody");
+      tbody.innerHTML = "";
+      data.forEach((item, i) => {
+        const row = `<tr><td>${i + 1}</td><td>${item.teknisi}</td><td>${item.mesin}</td>
+                     <td>${item.kerusakan}</td><td>${item.tindakan}</td><td>${item.tanggal}</td><td>${item.shift}</td></tr>`;
+        tbody.innerHTML += row;
+      });
+    }
+
+    function tambahData() {
+      const teknisi = document.getElementById("teknisi").value;
+      const mesin = document.getElementById("mesin").value;
+      const kerusakan = document.getElementById("kerusakan").value;
+      const tindakan = document.getElementById("tindakan").value;
+      const tanggal = document.getElementById("tanggal").value;
+      const shift = document.getElementById("shift").value;
+      if (!teknisi || !mesin || !kerusakan || !tindakan || !tanggal) {
+        alert("Lengkapi semua kolom.");
+        return;
+      }
+      const data = ambilLocalStorage();
+      data.push({ teknisi, mesin, kerusakan, tindakan, tanggal, shift });
+      simpanLocalStorage(data);
+      tampilkanData();
+    }
+
+    function hapusData() {
+      if (confirm("Yakin ingin menghapus semua data?")) {
+        localStorage.removeItem("rekapPerbaikan");
+        tampilkanData();
+      }
+    }
+
+    function unduhCSV() {
+      const data = ambilLocalStorage();
+      if (data.length === 0) return alert("Tidak ada data untuk diunduh.");
+      const header = "No,Teknisi,Mesin,Kerusakan,Tindakan,Tanggal,Shift
+";
+      const rows = data.map((d, i) => `${i + 1},${d.teknisi},${d.mesin},${d.kerusakan},${d.tindakan},${d.tanggal},${d.shift}`).join("
+");
+      const blob = new Blob([header + rows], { type: "text/csv" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "rekap_perbaikan.csv";
+      a.click();
+    }
+
+    window.onload = tampilkanData;
+  </script>
+</body>
+</html>
