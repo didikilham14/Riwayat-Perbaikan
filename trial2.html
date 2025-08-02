@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Rekap Perbaikan Mesin</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: auto;
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+
+    h1 {
+      text-align: center;
+    }
+
+    form label {
+      display: block;
+      margin-top: 15px;
+    }
+
+    input, textarea {
+      width: 100%;
+      padding: 8px;
+      margin-top: 5px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+
+    button {
+      margin-top: 15px;
+      padding: 10px 15px;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #0056b3;
+    }
+
+    table {
+      width: 100%;
+      margin-top: 30px;
+      border-collapse: collapse;
+    }
+
+    th, td {
+      padding: 10px;
+      border: 1px solid #ddd;
+      text-align: left;
+    }
+
+    th {
+      background: #f0f0f0;
+    }
+
+    .actions {
+      margin-top: 20px;
+      display: flex;
+      gap: 10px;
+    }
+
+    .actions button {
+      flex: 1;
+    }
+
+    footer {
+      text-align: center;
+      margin-top: 40px;
+      font-size: 12px;
+      color: gray;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h1>Rekap Perbaikan Mesin</h1>
+
+    <form id="repairForm">
+      <label for="tanggal">Tanggal:</label>
+      <input type="date" id="tanggal" required>
+
+      <label for="keterangan">Keterangan Perbaikan:</label>
+      <textarea id="keterangan" rows="3" required></textarea>
+
+      <label for="oleh">Oleh Siapa:</label>
+      <input type="text" id="oleh" required>
+
+      <button type="submit">Tambah Data</button>
+    </form>
+
+    <div class="actions">
+      <button onclick="exportCSV()">Ekspor ke CSV</button>
+      <button onclick="window.print()">Cetak</button>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Tanggal</th>
+          <th>Keterangan</th>
+          <th>Oleh</th>
+          <th>Aksi</th>
+        </tr>
+      </thead>
+      <tbody id="dataBody"></tbody>
+    </table>
+  </div>
+
+  <footer>&copy; 2025 | Rekap Perbaikan Mesin</footer>
+
+  <script>
+    const form = document.getElementById('repairForm');
+    const dataBody = document.getElementById('dataBody');
+    let data = [];
+
+    // Ambil data dari localStorage saat halaman dimuat
+    window.onload = function () {
+      const saved = localStorage.getItem('rekapMesin');
+      if (saved) {
+        data = JSON.parse(saved);
+        renderTable();
+      }
+    };
+
+    // Tambah data baru
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+      const tanggal = document.getElementById('tanggal').value;
+      const keterangan = document.getElementById('keterangan').value.trim();
+      const oleh = document.getElementById('oleh').value.trim();
+
+      if (!tanggal || !keterangan || !oleh) {
+        alert("Semua kolom harus diisi!");
+        return;
+      }
+
+      const newData = { tanggal, keterangan, oleh };
+      data.push(newData);
+      localStorage.setItem('rekapMesin', JSON.stringify(data));
+      renderTable();
+      form.reset();
+    });
+
+    // Render ulang tabel
+    function renderTable() {
+      dataBody.innerHTML = '';
+      data.forEach((item, index) => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${item.tanggal}</td>
+          <td>${item.keterangan}</td>
+          <td>${item.oleh}</td>
+          <td><button onclick="hapusBaris(${index})">Hapus</button></td>
+        `;
+        dataBody.appendChild(row);
+      });
+    }
+
+    // Hapus baris
+    function hapusBaris(index) {
+      if (confirm("Yakin ingin menghapus data ini?")) {
+        data.splice(index, 1);
+        localStorage.setItem('rekapMesin', JSON.stringify(data));
+        renderTable();
+      }
+    }
+
+    // Ekspor ke CSV
+    function exportCSV() {
+      let csv = 'Tanggal,Keterangan,Oleh\n';
+      data.forEach(item => {
+        csv += `"${item.tanggal}","${item.keterangan}","${item.oleh}"\n`;
+      });
+
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'rekap-perbaikan.csv';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+  </script>
+
+</body>
+</html>
