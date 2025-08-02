@@ -3,37 +3,37 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Rekap Perbaikan Mesin</title>
   <style>
     body { font-family: Arial, sans-serif; padding: 20px; }
     table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-    th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
     th { background-color: #f2f2f2; }
-    .form-input { margin: 10px 0; }
-    button { margin-top: 10px; }
+    input, select, button { margin: 5px 0; padding: 5px; }
   </style>
 </head>
 <body>
-  <h2>Rekap Perbaikan Mesin</h2>
-  <div class="form-input">
-    <label>Nama Teknisi: <input type="text" id="teknisi" /></label><br/>
-    <label>Mesin: <input type="text" id="mesin" /></label><br/>
-    <label>Kerusakan: <input type="text" id="kerusakan" /></label><br/>
-    <label>Tindakan: <input type="text" id="tindakan" /></label><br/>
-    <label>Tanggal: <input type="date" id="tanggal" /></label><br/>
-    <label>Shift: 
+  <h1>Rekap Perbaikan Mesin</h1>
+  <form id="repairForm">
+    <label>Nama Teknisi: <input type="text" id="teknisi" required /></label><br />
+    <label>Mesin: <input type="text" id="mesin" required /></label><br />
+    <label>Kerusakan: <input type="text" id="kerusakan" required /></label><br />
+    <label>Tindakan: <input type="text" id="tindakan" required /></label><br />
+    <label>Tanggal: <input type="date" id="tanggal" required /></label><br />
+    <label>Shift:
       <select id="shift">
         <option value="Pagi">Pagi</option>
         <option value="Sore">Sore</option>
         <option value="Malam">Malam</option>
       </select>
-    </label><br/>
-    <button onclick="tambahData()">Tambah</button>
-    <button onclick="unduhCSV()">Unduh CSV</button>
-    <button onclick="hapusData()">Hapus Semua</button>
-  </div>
-  <table id="tabel">
+    </label><br />
+    <button type="submit">Tambah</button>
+    <button type="button" id="download">Unduh CSV</button>
+    <button type="button" id="clear">Hapus Semua</button>
+  </form>
+
+  <table id="repairTable">
     <thead>
       <tr>
         <th>No</th><th>Teknisi</th><th>Mesin</th><th>Kerusakan</th><th>Tindakan</th><th>Tanggal</th><th>Shift</th>
@@ -43,64 +43,74 @@
   </table>
 
   <script>
-    function simpanLocalStorage(data) {
-      localStorage.setItem("rekapPerbaikan", JSON.stringify(data));
+    const form = document.getElementById('repairForm');
+    const tableBody = document.querySelector('#repairTable tbody');
+    const downloadBtn = document.getElementById('download');
+    const clearBtn = document.getElementById('clear');
+
+    function saveData(data) {
+      localStorage.setItem('repairData', JSON.stringify(data));
     }
 
-    function ambilLocalStorage() {
-      return JSON.parse(localStorage.getItem("rekapPerbaikan") || "[]");
+    function loadData() {
+      return JSON.parse(localStorage.getItem('repairData')) || [];
     }
 
-    function tampilkanData() {
-      const data = ambilLocalStorage();
-      const tbody = document.querySelector("#tabel tbody");
-      tbody.innerHTML = "";
-      data.forEach((item, i) => {
-        const row = `<tr><td>${i + 1}</td><td>${item.teknisi}</td><td>${item.mesin}</td>
-                     <td>${item.kerusakan}</td><td>${item.tindakan}</td><td>${item.tanggal}</td><td>${item.shift}</td></tr>`;
-        tbody.innerHTML += row;
+    function renderTable(data) {
+      tableBody.innerHTML = '';
+      data.forEach((item, index) => {
+        const row = document.createElement('tr');
+        row.innerHTML = `<td>${index + 1}</td>
+                         <td>${item.teknisi}</td>
+                         <td>${item.mesin}</td>
+                         <td>${item.kerusakan}</td>
+                         <td>${item.tindakan}</td>
+                         <td>${item.tanggal}</td>
+                         <td>${item.shift}</td>`;
+        tableBody.appendChild(row);
       });
     }
 
-    function tambahData() {
-      const teknisi = document.getElementById("teknisi").value;
-      const mesin = document.getElementById("mesin").value;
-      const kerusakan = document.getElementById("kerusakan").value;
-      const tindakan = document.getElementById("tindakan").value;
-      const tanggal = document.getElementById("tanggal").value;
-      const shift = document.getElementById("shift").value;
-      if (!teknisi || !mesin || !kerusakan || !tindakan || !tanggal) {
-        alert("Lengkapi semua kolom.");
-        return;
-      }
-      const data = ambilLocalStorage();
-      data.push({ teknisi, mesin, kerusakan, tindakan, tanggal, shift });
-      simpanLocalStorage(data);
-      tampilkanData();
-    }
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      const data = loadData();
+      data.push({
+        teknisi: teknisi.value,
+        mesin: mesin.value,
+        kerusakan: kerusakan.value,
+        tindakan: tindakan.value,
+        tanggal: tanggal.value,
+        shift: shift.value
+      });
+      saveData(data);
+      renderTable(data);
+      form.reset();
+    });
 
-    function hapusData() {
-      if (confirm("Yakin ingin menghapus semua data?")) {
-        localStorage.removeItem("rekapPerbaikan");
-        tampilkanData();
-      }
-    }
-
-    function unduhCSV() {
-      const data = ambilLocalStorage();
-      if (data.length === 0) return alert("Tidak ada data untuk diunduh.");
-      const header = "No,Teknisi,Mesin,Kerusakan,Tindakan,Tanggal,Shift
-";
-      const rows = data.map((d, i) => `${i + 1},${d.teknisi},${d.mesin},${d.kerusakan},${d.tindakan},${d.tanggal},${d.shift}`).join("
-");
-      const blob = new Blob([header + rows], { type: "text/csv" });
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(blob);
-      a.download = "rekap_perbaikan.csv";
+    downloadBtn.addEventListener('click', function () {
+      const data = loadData();
+      let csv = 'No,Teknisi,Mesin,Kerusakan,Tindakan,Tanggal,Shift\n';
+      data.forEach((item, index) => {
+        csv += `${index + 1},${item.teknisi},${item.mesin},${item.kerusakan},${item.tindakan},${item.tanggal},${item.shift}\n`;
+      });
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'rekap_perbaikan.csv';
       a.click();
-    }
+      URL.revokeObjectURL(url);
+    });
 
-    window.onload = tampilkanData;
+    clearBtn.addEventListener('click', function () {
+      localStorage.removeItem('repairData');
+      renderTable([]);
+    });
+
+    // Load data saat halaman dibuka
+    document.addEventListener('DOMContentLoaded', () => {
+      renderTable(loadData());
+    });
   </script>
 </body>
 </html>
